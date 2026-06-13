@@ -1,0 +1,60 @@
+// Stuff that exist in both Zig and ZON formats.
+// Mostly terminals
+
+// Identifiers
+PLAIN_ID: /[a-zA-Z_][a-zA-Z0-9_]*/
+QUOTED_ID: /@"([^"\\]|\\.)*"/
+
+// Strings and chars
+_ESCAPE_SINGLE: /\\[nr\\t'"]/
+_ESCAPE_UNICODE: /\\x[0-9a-fA-F]{2}/ | /\\u\{[0-9a-fA-F]+\}/
+
+_STR_UNESCAPED: /[^"\\]/
+STRING_SINGLE: "\"" (_ESCAPE_SINGLE | _ESCAPE_UNICODE | _STR_UNESCAPED)* "\""
+STRING_MULTI: /\\\\[^\n]*/
+
+_CHAR_UNESCAPED: /[^'\\]/
+CHAR_LIT: "'" (_ESCAPE_SINGLE | _ESCAPE_UNICODE | _CHAR_UNESCAPED) "'"
+
+// Keywords
+TRUE: "true"
+FALSE: "false"
+NULL: "null"
+
+// Number parts
+_HEX_START: /[0-9a-fA-F][0-9a-fA-F_]*/
+_HEX_FRAC: /[0-9a-fA-F_]+/
+
+_OCT_START: /[0-7][0-7_]*/
+_BIN_START: /[01][01_]*/
+
+_DEC_START: /[0-9][0-9_]*/
+_DEC_FRAC: /[0-9_]+/
+
+_EXP_P: /[pP][-+]?/ _DEC_FRAC
+_EXP_E: /[eE][-+]?/ _DEC_FRAC
+
+// Integers
+HEX_INT: /0[xX]/ _HEX_START
+OCT_INT: /0[oO]/ _OCT_START
+BIN_INT: /0[bB]/ _BIN_START
+DEC_INT: _DEC_START
+
+INT_LIT: HEX_INT
+       | OCT_INT
+       | BIN_INT
+       | DEC_INT
+
+// Floats
+HEX_FLOAT_FRAC: /0[xX]/ _HEX_START "." _HEX_FRAC _EXP_P?
+HEX_FLOAT_EXP:  /0[xX]/ _HEX_START _EXP_P
+DEC_FLOAT_FRAC: _DEC_START "." _DEC_FRAC _EXP_E?
+DEC_FLOAT_EXP:  _DEC_START _EXP_E
+
+FLOAT_LIT: HEX_FLOAT_FRAC
+         | HEX_FLOAT_EXP
+         | DEC_FLOAT_FRAC
+         | DEC_FLOAT_EXP
+
+// Other stuff
+COMMENT: "//" /[^\n]*/

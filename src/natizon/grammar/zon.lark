@@ -1,0 +1,52 @@
+// ZON (Zig Object Notation) Grammar
+
+?start: expr
+
+?expr: struct_init
+     | decl_literal
+     | string
+     | number
+     | bool
+     | null_val
+     | char_literal
+
+struct_init: "." "{" struct_body "}" -> populated_struct
+           | "." "{" "}"             -> empty_struct
+
+?struct_body: field_init ("," field_init)* ","? -> keyed_struct
+            | expr ("," expr)* ","?             -> array_struct
+
+field_init: "." identifier "=" expr
+decl_literal: "." identifier
+
+?identifier: PLAIN_ID     -> plain_id
+           | QUOTED_ID    -> quoted_id
+
+?string: STRING_SINGLE    -> single_string
+       | STRING_MULTI+    -> multiline_string
+
+?bool: TRUE               -> true_val
+     | FALSE              -> false_val
+
+null_val: NULL
+
+?char_literal: CHAR_LIT   -> char_val
+
+// ZON-exclusive number literals
+NAN: "nan"
+INF: "inf"
+
+?number: FLOAT_LIT        -> float_val
+       | INT_LIT          -> int_val
+       | "-" FLOAT_LIT    -> neg_float_val
+       | "-" INT_LIT      -> neg_int_val
+       | NAN              -> nan_val
+       | INF              -> inf_val
+       | "-" INF          -> neg_inf_val
+
+%import .common_zig (PLAIN_ID, QUOTED_ID, STRING_SINGLE, STRING_MULTI, CHAR_LIT, FLOAT_LIT, INT_LIT, COMMENT)
+%import .common_zig (TRUE, FALSE, NULL)
+%import common.WS
+
+%ignore COMMENT
+%ignore WS

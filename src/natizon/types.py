@@ -1,0 +1,29 @@
+"""Type definitions for the ZON parser."""
+
+from enum import StrEnum
+from typing import final
+
+# Represents any valid ZON value, including recursive collections.
+type ZonType = (
+    None
+    | str
+    | int
+    | float
+    | bool
+    | dict[str, ZonType]
+    | list[ZonType]
+    | tuple[ZonType, ...]
+)
+
+
+@final
+class EmptyContainerMode(StrEnum):
+    """Controls how empty ZON structures `.{}` are parsed.
+
+    Attributes:
+        DICT: Parses `.{}` as an empty dictionary `{}`.
+        SEQUENCE: Parses `.{}` as an empty sequence (list `[]` or tuple `()`, depending on parser settings).
+    """
+
+    DICT = "dict"
+    SEQUENCE = "sequence"
