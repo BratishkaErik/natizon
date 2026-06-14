@@ -37,16 +37,19 @@ Issues = "https://github.com/BratishkaErik/natizon/issues"
 
 [dependency-groups]
 test = [
-    "pytest>=9.1.0",
+    "pytest>=9.0.3",
 ]
 lint = [
-    "ruff>=0.15.17",
-    "ty>=0.0.49",
+    "ruff==0.15.16",
+    "ty>=0.0.44",
 ]
 dev = [
     { include-group = "test" },
     { include-group = "lint" },
 ]
+
+[tool.uv]
+exclude-newer = "1 week"
 
 [tool.ruff]
 preview = true
