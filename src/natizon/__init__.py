@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Eric Joldasov <bratishkaerik@landless-city.net>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """ZON (Zig Object Notation) native Python parser.
 
 This package provides a `json`-like interface

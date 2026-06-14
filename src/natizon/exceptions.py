@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Eric Joldasov <bratishkaerik@landless-city.net>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Exceptions for the ZON parser."""
 
 

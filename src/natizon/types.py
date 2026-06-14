@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Eric Joldasov <bratishkaerik@landless-city.net>
+#
+# SPDX-License-Identifier: Apache-2.0
+
 """Type definitions for the ZON parser."""
 
 from enum import StrEnum
