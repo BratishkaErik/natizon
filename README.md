@@ -10,6 +10,54 @@ It relies strictly on standard Python types, without AST wrappers and so on.
 > `natizon` is slightly more lenient than the official `std.zon` parser. This flexibility is intentional,
 > making it easier to consume and work with data in Python environments.
 
+## Installation
+
+```shell
+pip install natizon
+```
+
+or:
+
+```shell
+uv add natizon
+```
+
+## Usage
+
+`natizon` exposes a `loads()` function that works similarly to the standard library's `json.loads()`.
+
+> [!TIP]
+> **Looking to parse `build.zig.zon`?**
+>
+> Check out this Python script for
+> [Parsing and validating build.zig.zon](https://gist.github.com/BratishkaErik/8ec576586ebca98f222e8e7c2bf3d98b)
+> to see how to:
+> * load Zig 0.16 package metadata using `natizon`,
+> * validate fields with `Pydantic`,
+> * and print a pretty JSON dump using `Rich`.
+
+```python
+from natizon import loads
+
+zon_data = r"""
+.{
+    .package_name = "network_tools",
+    .version = "2.1.0",
+    .supported_platforms = .{ .linux, .macos, .windows },
+    .dependencies = .{
+        .lib_a = .{ .url = "https://server.com/a.tar" },
+        .lib_b = .{ .path = "../local_b" }
+    }
+}
+"""
+
+# Parses directly into standard Python dicts and lists
+parsed_data = loads(zon_data)
+
+print(parsed_data["package_name"])  # "network_tools"
+print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
+```
+
 ## ZON to Python Type Mapping
 
 When you pass a ZON string to `natizon.loads()`, the parser automatically converts ZON primitives and structures into
@@ -39,39 +87,7 @@ Here's breakdown:
 | **Struct**          | `.{ .x = 1 }`  | `dict`      | `{"x": 1}`   | Raises `ValueError` if duplicate field names are encountered.  |
 | **Empty Container** | `.{}`          | `dict`      | `{}`         | Parses using Array rules if `empty_mode` is set to `SEQUENCE`. |
 
-## Installation
-
-```shell
-pip install natizon
-```
-
-## Usage
-
-`natizon` exposes a `loads()` function that works similarly to the standard library's `json.loads()`.
-
-```python
-from natizon import loads
-
-zon_data = r"""
-.{
-    .package_name = "network_tools",
-    .version = "2.1.0",
-    .supported_platforms = .{ .linux, .macos, .windows },
-    .dependencies = .{
-        .lib_a = .{ .url = "https://server.com/a.tar" },
-        .lib_b = .{ .path = "../local_b" }
-    }
-}
-"""
-
-# Parses directly into standard Python dicts and lists
-parsed_data = loads(zon_data)
-
-print(parsed_data["package_name"])  # "network_tools"
-print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
-```
-
-### Parsing Options
+### Configuration
 
 You can customize how `natizon` handles specific ZON structures:
 
@@ -86,3 +102,8 @@ from natizon import loads, EmptyContainerMode
 data = loads(".{}", use_tuples=True, empty_mode=EmptyContainerMode.SEQUENCE)
 print(data)  # Output: ()
 ```
+
+## License
+
+This project is licensed under the Apache License 2.0. See the [LICENSES](LICENSES) directory for the full license
+text.
