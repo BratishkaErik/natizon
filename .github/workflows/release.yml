@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 Eric Joldasov <bratishkaerik@landless-city.net>
+#
+# SPDX-License-Identifier: CC0-1.0
+
 name: "Publish release to PyPI and GitHub"
 
 on:
@@ -7,6 +11,10 @@ on:
       - v*
 
 permissions: { }
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -104,7 +112,29 @@ jobs:
       - name: Create GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IS_PRERELEASE: ${{
+            contains(github.ref_name, 'rc') ||
+            contains(github.ref_name, 'beta') ||
+            contains(github.ref_name, 'alpha') ||
+            contains(github.ref_name, 'dev') ||
+            contains(github.ref_name, 'test') }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" dist/* \
-            --title "${GITHUB_REF_NAME}" \
-            --generate-notes
+          set -euo pipefail
+          shopt -s nullglob
+
+          ARGS=("--draft")
+          if [ "${IS_PRERELEASE}" = "true" ]; then
+            ARGS+=("--prerelease")
+          fi
+
+          export LC_ALL=C
+          mapfile -t FILES < <(printf "%s\n" dist/* | sort -r)
+
+          git tag -l --format='%(contents:body)' "${GITHUB_REF_NAME}" > release_notes.md
+          echo -e "\n\n## GitHub generated notes\n" >> release_notes.md
+
+          gh release create "${GITHUB_REF_NAME}" "${FILES[@]}" \
+            --title "Release ${GITHUB_REF_NAME}" \
+            --notes-file release_notes.md \
+            --generate-notes \
+            "${ARGS[@]}"
