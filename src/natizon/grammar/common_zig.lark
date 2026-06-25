@@ -59,3 +59,6 @@ FLOAT_LIT: HEX_FLOAT_FRAC
 
 // Other stuff
 COMMENT: "//" /[^\n]*/
+
+// Templates
+_list{item}: item ("," item)* ","?
