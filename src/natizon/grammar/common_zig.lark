@@ -7,14 +7,15 @@ QUOTED_ID: /@"([^"\\]|\\.)*"/
 
 // Strings and chars
 _ESCAPE_SINGLE: /\\[nr\\t'"]/
-_ESCAPE_UNICODE: /\\x[0-9a-fA-F]{2}/ | /\\u\{[0-9a-fA-F]+\}/
+_ESCAPE_HEX: /\\x[0-9a-fA-F]{2}/
+_ESCAPE_UNICODE: /\\u\{[0-9a-fA-F]+\}/
 
 _STR_UNESCAPED: /[^"\\]/
-STRING_SINGLE: "\"" (_ESCAPE_SINGLE | _ESCAPE_UNICODE | _STR_UNESCAPED)* "\""
+STRING_SINGLE: "\"" (_ESCAPE_SINGLE | _ESCAPE_HEX | _ESCAPE_UNICODE | _STR_UNESCAPED)* "\""
 STRING_MULTI: /\\\\[^\n]*/
 
 _CHAR_UNESCAPED: /[^'\\]/
-CHAR_LIT: "'" (_ESCAPE_SINGLE | _ESCAPE_UNICODE | _CHAR_UNESCAPED) "'"
+CHAR_LIT: "'" (_ESCAPE_SINGLE | _ESCAPE_HEX | _ESCAPE_UNICODE | _CHAR_UNESCAPED) "'"
 
 // Keywords
 TRUE: "true"
