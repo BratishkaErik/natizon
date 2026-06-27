@@ -57,11 +57,11 @@ preview = true
 [tool.ruff.lint]
 # Enable all `pydocstyle` rules, limiting to those that adhere to the
 # Google convention via `convention = "google"`.
-select = ["D"]
+select = ["E", "F", "W", "C", "I", "B", "D", "PL", "EM"]
 
 # On top of the Google convention, disable `D417`, which requires
 # documentation for every function parameter.
-ignore = ["D417"]
+ignore = ["D417", "E501"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"

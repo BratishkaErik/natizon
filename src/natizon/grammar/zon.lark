@@ -13,8 +13,8 @@
 struct_init: "." "{" struct_body "}" -> populated_struct
            | "." "{" "}"             -> empty_struct
 
-?struct_body: field_init ("," field_init)* ","? -> keyed_struct
-            | expr ("," expr)* ","?             -> array_struct
+?struct_body: _list{field_init} -> keyed_struct
+            | _list{expr}       -> array_struct
 
 field_init: "." identifier "=" expr
 decl_literal: "." identifier
@@ -46,6 +46,7 @@ INF: "inf"
 
 %import .common_zig (PLAIN_ID, QUOTED_ID, STRING_SINGLE, STRING_MULTI, CHAR_LIT, FLOAT_LIT, INT_LIT, COMMENT)
 %import .common_zig (TRUE, FALSE, NULL)
+%import .common_zig (_list)
 %import common.WS
 
 %ignore COMMENT

@@ -97,7 +97,7 @@ You can customize how `natizon` handles specific ZON structures:
   becomes an empty dictionary (`{}`) or an empty sequence (`[]` / `()`).
 
 ```python
-from natizon import loads, EmptyContainerMode
+from natizon import EmptyContainerMode, loads
 
 data = loads(".{}", use_tuples=True, empty_mode=EmptyContainerMode.SEQUENCE)
 print(data)  # Output: ()

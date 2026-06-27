@@ -6,11 +6,12 @@ included in the built distribution.
 """
 
 import sys
-from natizon import loads  # noqa: F401
+
+from natizon import loads
 
 
-def main():
-    # A representative ZON string testing structs, arrays, enums, strings, and ints
+def _check_parse() -> None:
+    """Parse a representative ZON string and verify the result."""
     zon_expr = r"""
     .{
         .package_name = "natizon",
@@ -25,22 +26,25 @@ def main():
         "platforms": ["linux", "windows"],
     }
 
+    # If the grammar file is missing, loads() will raise a ZonInternalError
+    result = loads(zon_expr)
+
+    if result != expected:
+        msg = f"Unexpected parse result.\nExpected: {expected}\nGot: {result}"
+        raise ValueError(msg)
+
+
+def main() -> None:
     try:
-        # If the grammar file is missing, loads() will raise a ZonInternalError
-        result = loads(zon_expr)
-
-        if result == expected:
-            print("Smoke test succeeded: Package imported and ZON parsed correctly.")
-            sys.exit(0)
-        else:
-            print(
-                f"Smoke test failed: Unexpected parse result.\nExpected: {expected}\nGot: {result}"
-            )
-            sys.exit(1)
-
+        _check_parse()
     except Exception as e:
-        print(f"Smoke test failed with exception: {e}")
+        sys.stderr.write(f"Smoke test failed with exception: {e}\n")
         sys.exit(1)
+    else:
+        sys.stdout.write(
+            "Smoke test succeeded: Package imported and ZON parsed correctly.\n"
+        )
+        sys.exit(0)
 
 
 if __name__ == "__main__":

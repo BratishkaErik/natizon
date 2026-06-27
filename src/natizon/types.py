@@ -4,16 +4,20 @@
 
 """Type definitions for the ZON parser."""
 
+__all__ = ("ZonType",)
+
 from enum import StrEnum
 from typing import final
 
 # Represents any valid ZON value, including recursive collections.
 type ZonType = (
+    # Atomics
     None
     | str
     | int
     | float
     | bool
+    # Containers
     | dict[str, ZonType]
     | list[ZonType]
     | tuple[ZonType, ...]
