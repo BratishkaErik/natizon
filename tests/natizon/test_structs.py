@@ -31,12 +31,12 @@ def test_empty_struct(zon_expr: str):
         (".{}", False, EmptyContainerMode.SEQUENCE, []),
     ],
     ids=[
-        #
+        # Filled cases
         "array_tuple_dict",
         "array_tuple_seq",
         "array_list_dict",
         "array_list_seq",
-        #
+        # Empty cases
         "empty_tuple_dict",
         "empty_list_dict",
         "empty_tuple_seq",

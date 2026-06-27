@@ -52,9 +52,8 @@ class _ZonParserImpl:
                 **options,
             )
         except (OSError, GrammarError, ImportError) as e:
-            raise ZonInternalError(
-                "Failed to load ZON grammar. The package may be corrupted."
-            ) from e
+            msg = "Failed to load ZON grammar. The package may be corrupted."
+            raise ZonInternalError(msg) from e
 
         self._transformers = {
             (False, EmptyContainerMode.DICT): ZonTransformer(
@@ -89,15 +88,17 @@ class _ZonParserImpl:
             line = e.line if isinstance(e.line, int) and e.line > 0 else None
             column = e.column if isinstance(e.column, int) and e.column > 0 else None
 
+            msg = "Syntax error in ZON text"
             raise ZonDecodeError(
-                "Syntax error in ZON text",
+                msg,
                 original_exc=e,
                 line=line,
                 column=column,
             ) from e
         except VisitError as e:
+            msg = f"Data transformation failed: {e.orig_exc!s}"
             raise ZonDecodeError(
-                f"Data transformation failed: {e.orig_exc!s}",
+                msg,
                 original_exc=e.orig_exc,
             ) from e
 

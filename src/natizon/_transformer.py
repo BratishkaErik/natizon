@@ -26,6 +26,7 @@ def _decode_zig_string(s: str) -> str:
 
 # Stop warnings, functions are used at runtime by Lark:
 # noinspection PyMethodMayBeStatic
+# ruff: noqa: PLR6301, PLR0904
 @final
 class _ZonTransformer(Transformer):
     """Transforms the parsed Lark Tree directly into Python data structures."""
@@ -45,7 +46,8 @@ class _ZonTransformer(Transformer):
         # Slices off the '@' prefix before evaluating the string literal
         val = _decode_zig_string(token.value[1:])
         if "\x00" in val:
-            raise ValueError("Identifier cannot contain null bytes")
+            msg = "Identifier cannot contain null bytes"
+            raise ValueError(msg)
         return val
 
     def single_string(self, token: Token) -> str:
@@ -76,7 +78,8 @@ class _ZonTransformer(Transformer):
     def neg_int_val(self, token: Token) -> int:
         val = self.int_val(token)
         if val == 0:
-            raise ValueError("Integer literal '-0' is ambiguous")
+            msg = "Integer literal '-0' is ambiguous"
+            raise ValueError(msg)
         return -val
 
     def nan_val(self, _: Token) -> float:
@@ -115,7 +118,8 @@ class _ZonTransformer(Transformer):
 
             for k, _ in items:
                 if k in seen:
-                    raise ValueError(f"Duplicate struct field name: '{k}'")
+                    msg = f"Duplicate struct field name: '{k}'"
+                    raise ValueError(msg)
                 seen.add(k)
 
         return result
