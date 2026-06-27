@@ -2,26 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-import ast
-import re
 from typing import Final, assert_never, final
 
 from lark import Token, Transformer, v_args
 
+from ._strings import decode_zig_string
 from .types import EmptyContainerMode, ZonType
-
-
-def _decode_zig_string(s: str) -> str:
-    """Decodes Zig escape sequences into Python characters before literal evaluation."""
-
-    def _unicode_replacer(match: re.Match) -> str:
-        hex_val = match.group(1)
-        # Python's \U escape expects exactly 8 padded hex digits
-        return f"\\U{hex_val.zfill(8)}"
-
-    # Translate \u{XXXX} to \U0000XXXX
-    s = re.sub(r"\\u\{([0-9a-fA-F]+)}", _unicode_replacer, s)
-    return ast.literal_eval(s)
 
 
 # Stop warnings, functions are used at runtime by Lark:
@@ -44,14 +30,14 @@ class _ZonTransformer(Transformer):
 
     def quoted_id(self, token: Token) -> str:
         # Slices off the '@' prefix before evaluating the string literal
-        val = _decode_zig_string(token.value[1:])
+        val = decode_zig_string(token.value[1:])
         if "\x00" in val:
             msg = "Identifier cannot contain null bytes"
             raise ValueError(msg)
         return val
 
     def single_string(self, token: Token) -> str:
-        return _decode_zig_string(token.value)
+        return decode_zig_string(token.value)
 
     def multiline_string(self, *tokens: Token) -> str:
         cleaned_lines = (
@@ -101,7 +87,7 @@ class _ZonTransformer(Transformer):
         return None
 
     def char_val(self, token: Token) -> int:
-        evaluated_char = _decode_zig_string(token.value)
+        evaluated_char = decode_zig_string(token.value)
         return ord(evaluated_char)
 
     def field_init(self, identifier: str, value: ZonType) -> tuple[str, ZonType]:
