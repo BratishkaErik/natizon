@@ -4,6 +4,8 @@
 
 """Type definitions for the ZON parser."""
 
+__all__ = ("ZonType",)
+
 from enum import StrEnum
 from typing import final
 

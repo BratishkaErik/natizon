@@ -6,6 +6,7 @@ included in the built distribution.
 """
 
 import sys
+
 from natizon import loads  # noqa: F401
 
 

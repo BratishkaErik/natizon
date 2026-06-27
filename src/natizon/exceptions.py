@@ -4,6 +4,12 @@
 
 """Exceptions for the ZON parser."""
 
+__all__ = (
+    "ZonDecodeError",
+    "ZonError",
+    "ZonInternalError",
+)
+
 
 class ZonError(Exception):
     """Base exception for all ZON-related errors."""

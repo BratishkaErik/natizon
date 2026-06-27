@@ -4,7 +4,7 @@
 
 import ast
 import re
-from typing import Final, final, assert_never
+from typing import Final, assert_never, final
 
 from lark import Token, Transformer, v_args
 

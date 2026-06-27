@@ -1,6 +1,6 @@
 import pytest
 
-from natizon import loads, EmptyContainerMode
+from natizon import EmptyContainerMode, loads
 
 
 @pytest.mark.parametrize(

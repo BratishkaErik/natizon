@@ -9,10 +9,6 @@ for decoding ZON strings directly into standard, native
 Python data structures (dicts, lists, primitives).
 """
 
-from .exceptions import ZonDecodeError, ZonError, ZonInternalError
-from .parser import EmptyContainerMode, loads
-from .types import ZonType
-
 __all__ = (
     "EmptyContainerMode",
     "ZonDecodeError",
@@ -21,3 +17,7 @@ __all__ = (
     "ZonType",
     "loads",
 )
+
+from .exceptions import ZonDecodeError, ZonError, ZonInternalError
+from .parser import EmptyContainerMode, loads
+from .types import ZonType
