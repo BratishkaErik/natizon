@@ -9,8 +9,25 @@ import re
 _UNICODE_ESCAPE_PATTERN = re.compile(r"\\u\{([0-9a-fA-F]+)}")
 
 
-def decode_zig_string(s: str) -> str:
-    """Decodes a valid Zig string into a native Python string."""
+def unescape_zon_string(s: str) -> str:
+    """Unescapes a ZON string or character literal into a raw Python string.
+
+    This function handles the conversion of Zig escape sequences and
+    Unicode sequences into their actual character values.
+
+    Args:
+        s: The input string containing the ZON string or character literal.
+            Must include the opening and closing quotes (e.g., "content" or
+            'c').
+
+    Returns:
+        The unescaped raw Python string.
+
+    Note:
+        Multiline string literals are processed via a separate pipeline in the
+        transformer, as they involve line-prefix stripping rather than standard
+        literal unescaping.
+    """
 
     def _unicode_replacer(match: re.Match) -> str:
         hex_val = match.group(1)

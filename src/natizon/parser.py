@@ -76,7 +76,7 @@ class _ZonParserImpl:
         return cls()
 
     def parse(
-        self, text: str, use_tuples: bool, empty_mode: EmptyContainerMode
+        self, text: str, *, use_tuples: bool, empty_mode: EmptyContainerMode
     ) -> ZonType:
         try:
             tree = self.parser.parse(text)

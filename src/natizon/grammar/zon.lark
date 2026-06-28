@@ -3,7 +3,7 @@
 ?start: expr
 
 ?expr: struct_init
-     | decl_literal
+     | enum_literal
      | string
      | number
      | bool
@@ -17,7 +17,7 @@ struct_init: "." "{" struct_body "}" -> populated_struct
             | _list{expr}       -> array_struct
 
 field_init: "." identifier "=" expr
-decl_literal: "." identifier
+enum_literal: "." identifier
 
 ?identifier: PLAIN_ID     -> plain_id
            | QUOTED_ID    -> quoted_id
