@@ -1,9 +1,9 @@
 # natizon
 
-`natizon` (short for "native-ZON") is a pure Python parser for
+`natizon` (short for "native-ZON") is a pure Python parser and serializer for
 [ZON (Zig Object Notation)](https://ziglang.org/documentation/0.16.0/std/#std.zon). Built on top of
 [Lark](https://github.com/lark-parser/lark), it provides a familiar, `json`-like interface for decoding ZON strings
-directly into Python data structures: like dictionaries, lists, strings, booleans, and numbers.
+directly into Python data structures, and for encoding Python data structures back into ZON text.
 It relies strictly on standard Python types, without AST wrappers and so on.
 
 > [!NOTE]
@@ -24,7 +24,7 @@ uv add natizon
 
 ## Usage
 
-`natizon` exposes a `loads()` function that works similarly to the standard library's `json.loads()`.
+`natizon` exposes `loads()` and `dumps()` functions that work similarly to the standard library's `json` module.
 
 > [!TIP]
 > **Looking to parse `build.zig.zon`?**
@@ -35,6 +35,8 @@ uv add natizon
 > * load Zig 0.16 package metadata using `natizon`,
 > * validate fields with `Pydantic`,
 > * and print a pretty JSON dump using `Rich`.
+
+### Parsing
 
 ```python
 from natizon import loads
@@ -57,6 +59,45 @@ parsed_data = loads(zon_data)
 print(parsed_data["package_name"])  # "network_tools"
 print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
 ```
+
+### Serialization
+
+You can serialize standard Python objects back into ZON text using `dumps()`:
+
+```python
+from natizon import dumps
+
+data = {
+    "package_name": "network_tools",
+    "version": "2.1.0",
+    "supported_platforms": ["linux", "macos", "windows"],
+}
+
+zon_string = dumps(data, indent=2)
+print(zon_string)
+```
+
+Output:
+
+```zig
+.{
+  .package_name = "network_tools",
+  .version = "2.1.0",
+  .supported_platforms = .{
+    "linux",
+    "macos",
+    "windows",
+  },
+}
+```
+
+> [!NOTE]
+> While `loads()` and `dumps()` are designed to be compatible, some ZON-specific constructs do not roundtrip exactly:
+> * **Enum literals** (e.g., `.linux`) are parsed into Python strings and will serialize back as quoted strings
+    (`"linux"`).
+> * **Char literals** (e.g., `'a'`) are parsed into Python integers and will serialize back as integers (`97`).
+> * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
+    `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
 
 ## ZON to Python Type Mapping
 
@@ -89,8 +130,6 @@ Here's breakdown:
 
 ### Configuration
 
-You can customize how `natizon` handles specific ZON structures:
-
 * **`use_tuples`** (`bool`, default `False`): If `True`, parses ZON arrays (e.g., `.{ 1, 2, 3 }`) as Python `tuple`s
   instead of `list`s.
 * **`empty_mode`** (`EmptyContainerMode`, default `EmptyContainerMode.DICT`): Controls whether an empty container `.{}`
@@ -102,6 +141,27 @@ from natizon import EmptyContainerMode, loads
 data = loads(".{}", use_tuples=True, empty_mode=EmptyContainerMode.SEQUENCE)
 print(data)  # Output: ()
 ```
+
+## Python to ZON Type Mapping
+
+When you pass a Python object to `natizon.dumps()`, it is converted to its natural ZON representation.
+
+| Python Type    | Python Value     | ZON Output        | Notes                                                             |
+|:---------------|:-----------------|:------------------|:------------------------------------------------------------------|
+| `NoneType`     | `None`           | `null`            |                                                                   |
+| `bool`         | `True`, `False`  | `true`, `false`   |                                                                   |
+| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                   |
+| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.          |
+| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string. |
+| `list`/`tuple` | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Both `list` and `tuple` map to ZON arrays.                        |
+| `dict`         | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax. |
+
+### Configuration
+
+* **`indent`** (`int | str | None`, default `None`): If a non-negative integer, indents with that many spaces per level.
+  If a string (like `"\t"`), uses that string to indent each level. If `None`, outputs a compact, single-line
+  representation.
+* **`sort_keys`** (`bool`, default `False`): If `True`, dictionary keys are output in sorted order.
 
 ## License
 

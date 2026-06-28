@@ -9,13 +9,13 @@ requires-python = ">= 3.12"
 authors = [
     { name = "Eric Joldasov", email = "bratishkaerik@landless-city.net" }
 ]
-description = "A pure Python, native ZON (Zig Object Notation) parser."
+description = "A pure Python, native ZON (Zig Object Notation) parser and serializer."
 readme = "README.md"
 license = "Apache-2.0"
 license-files = [
     "LICENSES/*",
 ]
-keywords = ["zig", "ZON", "Zig Object Notation", "parser"]
+keywords = ["zig", "ZON", "Zig Object Notation", "parser", "serializer"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",

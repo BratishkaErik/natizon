@@ -37,3 +37,55 @@ def unescape_zon_string(s: str) -> str:
     # Translate \u{XXXX} to \U0000XXXX
     s = _UNICODE_ESCAPE_PATTERN.sub(_unicode_replacer, s)
     return ast.literal_eval(s)
+
+
+# Maps exactly to the `PLAIN_ID` rule in common_zig.lark
+_PLAIN_ID_PATTERN = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+# Pre-compiled translation table for str.translate() to optimize escaping performance.
+# Maps integer codepoints to their escaped string representations for ZON/Zig.
+_ZON_ESCAPE_TABLE = {
+    ord("\\"): r"\\",
+    ord('"'): r"\"",
+    ord("\n"): r"\n",
+    ord("\r"): r"\r",
+    ord("\t"): r"\t",
+}
+
+# Populate the table with remaining non-printable ASCII control characters (0x00 - 0x1F)
+_ASCII_CONTROL_MAX_EXCLUSIVE = 0x20
+for codepoint in range(_ASCII_CONTROL_MAX_EXCLUSIVE):
+    if codepoint not in _ZON_ESCAPE_TABLE:
+        _ZON_ESCAPE_TABLE[codepoint] = f"\\x{codepoint:02x}"
+
+
+def escape_zon_string(s: str) -> str:
+    """Escapes a raw Python string for inclusion in a ZON string or character literal.
+
+    This function applies the necessary escaping for quotes, backslashes,
+    and non-printable ASCII characters.
+
+    Args:
+        s: The input raw Python string to be escaped.
+
+    Returns:
+        The escaped ZON string content, without surrounding quotes.
+
+    Note:
+        The resulting string is safe for inclusion as content within either
+        a single-line or multiline ZON string.
+    """
+    return s.translate(_ZON_ESCAPE_TABLE)
+
+
+def can_be_plain_identifier(s: str) -> bool:
+    """Checks if a string is a valid unquoted ZON identifier.
+
+    This function determines whether the given string conforms to the syntax rules
+    for plain identifiers in ZON.
+
+    Returns:
+        True if the string can be used without quotes. If False, the string
+        must be represented as a quoted identifier (e.g., using the @"..." form).
+    """
+    return bool(_PLAIN_ID_PATTERN.match(s))
