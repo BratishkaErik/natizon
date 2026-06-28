@@ -6,7 +6,7 @@ from typing import Final, assert_never, final
 
 from lark import Token, Transformer, v_args
 
-from ._strings import decode_zig_string
+from ._strings import unescape_zon_string
 from .types import EmptyContainerMode, ZonType
 
 
@@ -30,14 +30,14 @@ class _ZonTransformer(Transformer):
 
     def quoted_id(self, token: Token) -> str:
         # Slices off the '@' prefix before evaluating the string literal
-        val = decode_zig_string(token.value[1:])
+        val = unescape_zon_string(token.value[1:])
         if "\x00" in val:
             msg = "Identifier cannot contain null bytes"
             raise ValueError(msg)
         return val
 
     def single_string(self, token: Token) -> str:
-        return decode_zig_string(token.value)
+        return unescape_zon_string(token.value)
 
     def multiline_string(self, *tokens: Token) -> str:
         cleaned_lines = (
@@ -87,13 +87,13 @@ class _ZonTransformer(Transformer):
         return None
 
     def char_val(self, token: Token) -> int:
-        evaluated_char = decode_zig_string(token.value)
+        evaluated_char = unescape_zon_string(token.value)
         return ord(evaluated_char)
 
     def field_init(self, identifier: str, value: ZonType) -> tuple[str, ZonType]:
         return identifier, value
 
-    def decl_literal(self, identifier: str) -> str:
+    def enum_literal(self, identifier: str) -> str:
         return identifier
 
     def keyed_struct(self, *items: tuple[str, ZonType]) -> dict[str, ZonType]:
