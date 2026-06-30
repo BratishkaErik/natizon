@@ -11,7 +11,7 @@ __all__ = (
     "ZonType",
 )
 
-from enum import StrEnum
+from enum import Enum, StrEnum
 from typing import final
 
 # Represents any valid ZON value, including recursive collections.
@@ -36,6 +36,7 @@ type ZonSerializable = (
     | int
     | float
     | bool
+    | Enum
     # Containers
     | Sequence[ZonSerializable]
     | Mapping[str, ZonSerializable]

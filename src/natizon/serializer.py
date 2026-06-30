@@ -11,6 +11,7 @@ __all__ = (
 
 import math
 from collections.abc import Mapping, Sequence
+from enum import Enum, Flag
 from typing import Final, cast, final
 
 from ._strings import can_be_plain_identifier, escape_zon_string
@@ -31,14 +32,14 @@ class _ZonSerializer:
         self.sort_keys = sort_keys
 
     @staticmethod
-    def _format_key(key: str) -> str:
-        if can_be_plain_identifier(key):
-            return f".{key}"
-        escaped = escape_zon_string(key)
+    def _format_identifier(name: str) -> str:
+        if can_be_plain_identifier(name):
+            return f".{name}"
+        escaped = escape_zon_string(name)
         return f'.@"{escaped}"'
 
     @staticmethod
-    def _dump_float(val: float) -> str:
+    def _format_float(val: float) -> str:
         if math.isnan(val):
             return "nan"
         if math.isinf(val):
@@ -57,19 +58,22 @@ class _ZonSerializer:
 
         return f".{{ {', '.join(lines)} }}"
 
-    def _dump_sequence(self, seq: Sequence[ZonSerializable], level: int) -> str:
+    def _format_sequence(self, seq: Sequence[ZonSerializable], level: int) -> str:
         if not seq:
             return ".{}"
 
         lines = [self.dump(item, level + 1) for item in seq]
         return self._braces(lines, level)
 
-    def _dump_dict(self, d: Mapping[str, ZonSerializable], level: int) -> str:
+    def _format_mapping(self, d: Mapping[str, ZonSerializable], level: int) -> str:
         if not d:
             return ".{}"
 
         items = sorted(d.items()) if self.sort_keys else list(d.items())
-        lines = [f"{self._format_key(k)} = {self.dump(v, level + 1)}" for k, v in items]
+        lines = [
+            f"{self._format_identifier(k)} = {self.dump(v, level + 1)}"
+            for k, v in items
+        ]
         return self._braces(lines, level)
 
     def dump(self, current_obj: ZonSerializable, level: int = 0) -> str:
@@ -80,16 +84,22 @@ class _ZonSerializer:
                 result = "null"
             case bool():
                 result = "true" if current_obj else "false"
+            case Flag():
+                obj_type = type(current_obj).__name__
+                msg = f"Object of type {obj_type!r}  is not ZON serializable (Flag/IntFlag serialization is ambiguous)"
+                raise TypeError(msg)
+            case Enum():
+                result = self._format_identifier(current_obj.name)
             case int():
                 result = str(current_obj)
             case float():
-                result = self._dump_float(current_obj)
+                result = self._format_float(current_obj)
             case str():
                 result = f'"{escape_zon_string(current_obj)}"'
             case Mapping() as d:
-                result = self._dump_dict(d, level)
+                result = self._format_mapping(d, level)
             case Sequence() as seq:
-                result = self._dump_sequence(seq, level)
+                result = self._format_sequence(seq, level)
             case _:
                 obj_type = type(current_obj).__name__
                 msg = f"object of type {obj_type!r} is not ZON serializable"
@@ -100,7 +110,12 @@ class _ZonSerializer:
 
 def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:
     match obj:
-        case None | str() | int() | float() | bool():
+        case Flag():
+            obj_type = type(obj).__name__
+            msg = f"Object of type {obj_type!r}  is not ZON serializable (Flag/IntFlag serialization is ambiguous)"
+            raise TypeError(msg)
+
+        case None | Enum() | str() | int() | float() | bool():
             return
 
         case Mapping():

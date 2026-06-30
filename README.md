@@ -70,15 +70,22 @@ print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
 You can serialize standard Python objects back into ZON text using `dumps()`:
 
 ```python
+from enum import Enum
 from natizon import dumps
 
-data = {
-    "package_name": "network_tools",
-    "version": "2.1.0",
-    "supported_platforms": ["linux", "macos", "windows"],
+
+class Difficulty(Enum):
+    EASY = "easy"
+    HARD = "hard"
+
+
+game_config = {
+    "title": "Neon Dash",
+    "difficulty": Difficulty.HARD,
+    "player_stats": {"level": 10, "xp": 1500},
 }
 
-zon_string = dumps(data, indent=2)
+zon_string = dumps(game_config, indent=2)
 print(zon_string)
 ```
 
@@ -86,12 +93,11 @@ Output:
 
 ```zig
 .{
-  .package_name = "network_tools",
-  .version = "2.1.0",
-  .supported_platforms = .{
-    "linux",
-    "macos",
-    "windows",
+  .title = "Neon Dash",
+  .difficulty = .HARD,
+  .player_stats = .{
+    .level = 10,
+    .xp = 1500,
   },
 }
 ```
@@ -99,7 +105,10 @@ Output:
 > [!NOTE]
 > While `loads()` and `dumps()` are designed to be compatible, some ZON-specific constructs do not roundtrip exactly:
 > * **Enum literals** (e.g., `.linux`) are parsed into Python strings and will serialize back as quoted strings
-    (`"linux"`).
+    (`"linux"`). If you want to preserve them as ZON Enum literals, convert them to your `Enum` subclass member
+    (e.g.,`Color.RED`) instead.
+> * **Enum flags** (`enum.Flag`, `enum.IntFlag`) are not serializable, as their bitwise nature lacks a canonical ZON
+    representation. To include them in your output, convert them to a standard `Enum` tag, integer, or array first.
 > * **Char literals** (e.g., `'a'`) are parsed into Python integers and will serialize back as integers (`97`).
 > * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
     `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
@@ -181,6 +190,7 @@ When you pass a Python object to `natizon.dumps()`, it is converted to its natur
 | `int`       | `42`, `-7`       | `42`, `-7`        |                                                                      |
 | `float`     | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.             |
 | `str`       | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.    |
+| `Enum`      | `Color.RED`      | `.RED`            | Maps to ZON Enum Literals using the member **name**.                 |
 | `Sequence`  | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`). |
 | `Mapping`   | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.    |
 
