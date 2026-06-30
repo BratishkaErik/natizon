@@ -4,6 +4,8 @@
 
 """Type definitions for the ZON parser and serializer."""
 
+from collections.abc import Mapping, Sequence
+
 __all__ = (
     "ZonSerializable",
     "ZonType",
@@ -35,9 +37,8 @@ type ZonSerializable = (
     | float
     | bool
     # Containers
-    | dict[str, ZonSerializable]
-    | list[ZonSerializable]
-    | tuple[ZonSerializable, ...]
+    | Sequence[ZonSerializable]
+    | Mapping[str, ZonSerializable]
 )
 
 

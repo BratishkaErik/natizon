@@ -169,17 +169,17 @@ print(data)  # Output: ()
 
 When you pass a Python object to `natizon.dumps()`, it is converted to its natural ZON representation.
 
-| Python Type    | Python Value     | ZON Output        | Notes                                                             |
-|:---------------|:-----------------|:------------------|:------------------------------------------------------------------|
-| `NoneType`     | `None`           | `null`            |                                                                   |
-| `bool`         | `True`, `False`  | `true`, `false`   |                                                                   |
-| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                   |
-| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.          |
-| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string. |
-| `list`/`tuple` | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Both `list` and `tuple` map to ZON arrays.                        |
-| `dict`         | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax. |
+| Python Type | Python Value     | ZON Output        | Notes                                                                |
+|:------------|:-----------------|:------------------|:---------------------------------------------------------------------|
+| `NoneType`  | `None`           | `null`            |                                                                      |
+| `bool`      | `True`, `False`  | `true`, `false`   |                                                                      |
+| `int`       | `42`, `-7`       | `42`, `-7`        |                                                                      |
+| `float`     | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.             |
+| `str`       | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.    |
+| `Sequence`  | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`). |
+| `Mapping`   | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.    |
 
-**Note:** For `dict` types, only string keys are supported. Non-string keys will result in a `TypeError`.
+**Note:** For `Mapping` types, only string keys are supported. Non-string keys will result in a `TypeError`.
 
 ### Configuration
 

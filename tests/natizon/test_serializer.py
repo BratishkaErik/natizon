@@ -1,3 +1,6 @@
+from collections import ChainMap, Counter, UserDict, UserList, deque, namedtuple
+from types import MappingProxyType
+
 import pytest
 
 from natizon import dumps, loads
@@ -56,14 +59,32 @@ def test_dumps_strings(obj: str, expected: str):
     [
         ([], ".{}"),
         ((), ".{}"),
+        (deque(), ".{}"),
+        (UserList(), ".{}"),
         ([1, 2, 3], ".{ 1, 2, 3 }"),
         ((True, False, None), ".{ true, false, null }"),
-        ([{"a": 1}], ".{ .{ .a = 1 } }"),
+        (deque([1, 2]), ".{ 1, 2 }"),
+        (UserList([3, 4]), ".{ 3, 4 }"),
+        (range(1, 4), ".{ 1, 2, 3 }"),
+        (bytearray([5, 6]), ".{ 5, 6 }"),
+        (namedtuple("Point", ["x", "y"])(1, 2), ".{ 1, 2 }"),
     ],
-    ids=["empty_list", "empty_tuple", "flat_list", "flat_tuple", "nested_struct"],
+    ids=[
+        "empty_list",
+        "empty_tuple",
+        "empty_deque",
+        "empty_userlist",
+        "flat_list",
+        "flat_tuple",
+        "flat_deque",
+        "flat_userlist",
+        "lazy_range",
+        "bytearray_sequence",
+        "named_tuple",
+    ],
 )
 def test_dumps_sequences(obj, expected: str):
-    """Test serialization of lists and tuples."""
+    """Test serialization of various Sequence implementations."""
     assert dumps(obj) == expected
 
 
@@ -71,15 +92,29 @@ def test_dumps_sequences(obj, expected: str):
     "obj, expected",
     [
         ({}, ".{}"),
+        (UserDict(), ".{}"),
         ({"key": "value"}, '.{ .key = "value" }'),
         ({"complex-key!": 42}, '.{ .@"complex-key!" = 42 }'),
         ({"space key": True}, '.{ .@"space key" = true }'),
         ({"nested": {"x": 1}}, ".{ .nested = .{ .x = 1 } }"),
+        (MappingProxyType({"immutable": True}), ".{ .immutable = true }"),
+        (ChainMap({"a": 1}, {"b": 2}), ".{ .b = 2, .a = 1 }"),
+        (Counter(a=1), ".{ .a = 1 }"),
     ],
-    ids=["empty", "plain_id", "quoted_special", "quoted_space", "nested"],
+    ids=[
+        "empty",
+        "empty_userdict",
+        "plain_id",
+        "quoted_special",
+        "quoted_space",
+        "nested",
+        "mapping_proxy",
+        "chain_map",
+        "counter_map",
+    ],
 )
-def test_dumps_dicts(obj: dict, expected: str):
-    """Test serialization of dictionaries and identifier formatting."""
+def test_dumps_dicts(obj, expected: str):
+    """Test serialization of various Mapping implementations."""
     assert dumps(obj) == expected
 
 
@@ -143,7 +178,7 @@ def test_dumps_indent_negative_raises():
         dumps({"a": 1}, indent=-1)
 
 
-def test_dumps_unserializable():
+def test_dumps_unserializable_types():
     """Ensure TypeError is raised for unsupported types."""
 
     class CustomObj:
@@ -151,3 +186,25 @@ def test_dumps_unserializable():
 
     with pytest.raises(TypeError, match="is not ZON serializable"):
         dumps(CustomObj())
+
+
+def test_dumps_unserializable_values():
+    """Test that circular references raise ValueError."""
+    # Cyclic sequence
+    cyclic_list: list[object] = []
+    cyclic_list.append(cyclic_list)
+    with pytest.raises(ValueError, match="circular reference detected in ZON sequence"):
+        dumps(cyclic_list)
+
+    # Cyclic mapping
+    cyclic_dict: dict[str, object] = {"a": 1}
+    cyclic_dict["self"] = cyclic_dict
+    with pytest.raises(
+        ValueError, match="circular reference detected in ZON dictionary"
+    ):
+        dumps(cyclic_dict)
+
+    # Safe duplicate references
+    shared_obj = {"shared": "data"}
+    safe_nested = [shared_obj, shared_obj]
+    assert dumps(safe_nested) == '.{ .{ .shared = "data" }, .{ .shared = "data" } }'

@@ -10,6 +10,7 @@ __all__ = (
 )
 
 import math
+from collections.abc import Mapping, Sequence
 from typing import Final, cast, final
 
 from ._strings import can_be_plain_identifier, escape_zon_string
@@ -56,16 +57,14 @@ class _ZonSerializer:
 
         return f".{{ {', '.join(lines)} }}"
 
-    def _dump_sequence(
-        self, seq: list[ZonSerializable] | tuple[ZonSerializable, ...], level: int
-    ) -> str:
+    def _dump_sequence(self, seq: Sequence[ZonSerializable], level: int) -> str:
         if not seq:
             return ".{}"
 
         lines = [self.dump(item, level + 1) for item in seq]
         return self._braces(lines, level)
 
-    def _dump_dict(self, d: dict[str, ZonSerializable], level: int) -> str:
+    def _dump_dict(self, d: Mapping[str, ZonSerializable], level: int) -> str:
         if not d:
             return ".{}"
 
@@ -87,10 +86,10 @@ class _ZonSerializer:
                 result = self._dump_float(current_obj)
             case str():
                 result = f'"{escape_zon_string(current_obj)}"'
-            case list() | tuple() as seq:
-                result = self._dump_sequence(seq, level)
-            case dict() as d:
+            case Mapping() as d:
                 result = self._dump_dict(d, level)
+            case Sequence() as seq:
+                result = self._dump_sequence(seq, level)
             case _:
                 obj_type = type(current_obj).__name__
                 msg = f"object of type {obj_type!r} is not ZON serializable"
@@ -104,7 +103,7 @@ def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:
         case None | str() | int() | float() | bool():
             return
 
-        case dict():
+        case Mapping():
             obj_id = id(obj)
             if obj_id in seen_ids:
                 msg = "circular reference detected in ZON dictionary"
@@ -121,7 +120,7 @@ def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:
             finally:
                 seen_ids.remove(obj_id)
 
-        case list() | tuple():
+        case Sequence():
             obj_id = id(obj)
             if obj_id in seen_ids:
                 msg = "circular reference detected in ZON sequence"
