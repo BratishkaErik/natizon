@@ -131,7 +131,7 @@ jobs:
           mapfile -t FILES < <(printf "%s\n" dist/* | sort -r)
 
           git tag -l --format='%(contents:body)' "${GITHUB_REF_NAME}" > release_notes.md
-          echo -e "\n\n## GitHub generated notes\n" >> release_notes.md
+          echo -e "## GitHub generated notes" >> release_notes.md
 
           gh release create "${GITHUB_REF_NAME}" "${FILES[@]}" \
             --title "Release ${GITHUB_REF_NAME}" \
