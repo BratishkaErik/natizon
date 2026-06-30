@@ -15,6 +15,7 @@ __all__ = (
     "loads",
     "validate_zon_serializable",
     "ZonDecodeError",
+    "ZonEncodable",
     "ZonError",
     "ZonInternalError",
     "ZonSerializable",
@@ -24,4 +25,4 @@ __all__ = (
 from .exceptions import ZonDecodeError, ZonError, ZonInternalError
 from .parser import EmptyContainerMode, loads
 from .serializer import dumps, validate_zon_serializable
-from .types import ZonSerializable, ZonType
+from .types import ZonEncodable, ZonSerializable, ZonType

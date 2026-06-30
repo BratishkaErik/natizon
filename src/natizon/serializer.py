@@ -15,7 +15,7 @@ from enum import Enum, Flag
 from typing import Final, cast, final
 
 from ._strings import can_be_plain_identifier, escape_zon_string
-from .types import ZonSerializable
+from .types import ZonEncodable, ZonSerializable
 
 
 @final
@@ -76,12 +76,14 @@ class _ZonSerializer:
         ]
         return self._braces(lines, level)
 
-    def dump(self, current_obj: ZonSerializable, level: int = 0) -> str:
+    def dump(self, current_obj: ZonSerializable, level: int = 0) -> str:  # noqa: C901
         """Recursively serialize an object based on its type."""
         result: str
         match current_obj:
             case None:
                 result = "null"
+            case ZonEncodable():
+                return self.dump(current_obj.to_zon(), level)
             case bool():
                 result = "true" if current_obj else "false"
             case Flag():
@@ -108,8 +110,22 @@ class _ZonSerializer:
         return result
 
 
-def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:
+def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:  # noqa: C901, PLR0912
     match obj:
+        case ZonEncodable():
+            obj_id = id(obj)
+            if obj_id in seen_ids:
+                msg = "circular reference detected in custom ZON-encodable object"
+                raise ValueError(msg)
+            seen_ids.add(obj_id)
+
+            try:
+                _validate_zon_serializable_impl(obj.to_zon(), seen_ids)
+            finally:
+                seen_ids.remove(obj_id)
+
+            return
+
         case Flag():
             obj_type = type(obj).__name__
             msg = f"Object of type {obj_type!r}  is not ZON serializable (Flag/IntFlag serialization is ambiguous)"

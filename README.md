@@ -113,6 +113,8 @@ Output:
 > * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
     `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
 
+## Advanced Usage
+
 ### Validation
 
 `dumps()` automatically validates your data before serialization. However, if you need to check if an object is
@@ -134,6 +136,41 @@ try:
     print("Data is valid!")
 except (TypeError, ValueError) as e:
     print(f"Validation failed: {e}")
+```
+
+### Custom Serialization
+
+If you have custom classes that you want to serialize into ZON, you can implement the `ZonEncodable` protocol. Simply
+define a `to_zon()` method that returns a `ZonSerializable` type.
+
+```python
+from dataclasses import dataclass
+from natizon import dumps, ZonSerializable
+
+
+@dataclass
+class ByteSize:
+    bytes: int
+
+    def to_zon(self) -> ZonSerializable:
+        return f"{self.bytes}B"
+
+
+data = {
+    "cache_limit": ByteSize(1024),
+    "buffer_size": ByteSize(2048),
+}
+
+print(dumps(data, indent=2))
+```
+
+Output:
+
+```zig
+.{
+  .cache_limit = "1024B",
+  .buffer_size = "2048B",
+}
 ```
 
 ## ZON to Python Type Mapping
@@ -183,16 +220,17 @@ print(data)  # Output: ()
 
 When you pass a Python object to `natizon.dumps()`, it is converted to its natural ZON representation.
 
-| Python Type | Python Value     | ZON Output        | Notes                                                                |
-|:------------|:-----------------|:------------------|:---------------------------------------------------------------------|
-| `NoneType`  | `None`           | `null`            |                                                                      |
-| `bool`      | `True`, `False`  | `true`, `false`   |                                                                      |
-| `int`       | `42`, `-7`       | `42`, `-7`        |                                                                      |
-| `float`     | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.             |
-| `str`       | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.    |
-| `Enum`      | `Color.RED`      | `.RED`            | Maps to ZON Enum Literals using the member **name**.                 |
-| `Sequence`  | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`). |
-| `Mapping`   | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.    |
+| Python Type    | Python Value     | ZON Output        | Notes                                                                                                  |
+|:---------------|:-----------------|:------------------|:-------------------------------------------------------------------------------------------------------|
+| `NoneType`     | `None`           | `null`            |                                                                                                        |
+| `bool`         | `True`, `False`  | `true`, `false`   |                                                                                                        |
+| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                                                        |
+| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.                                               |
+| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.                                      |
+| `Enum`         | `Color.RED`      | `.RED`            | Maps to ZON Enum Literals using the member **name**.                                                   |
+| `Sequence`     | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`).                                   |
+| `Mapping`      | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.                                      |
+| `ZonEncodable` | `obj.to_zon()`   | *Variable*        | **Custom:** User defines the serialization (can return any supported type above, e.g., `str`, `dict`). |
 
 **Note:** For `Mapping` types, only string keys are supported. Non-string keys will result in a `TypeError`.
 

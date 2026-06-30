@@ -7,12 +7,13 @@
 from collections.abc import Mapping, Sequence
 
 __all__ = (
+    "ZonEncodable",
     "ZonSerializable",
     "ZonType",
 )
 
 from enum import Enum, StrEnum
-from typing import final
+from typing import Protocol, final, runtime_checkable
 
 # Represents any valid ZON value, including recursive collections.
 type ZonType = (
@@ -37,10 +38,21 @@ type ZonSerializable = (
     | float
     | bool
     | Enum
+    # Custom types
+    | ZonEncodable
     # Containers
     | Sequence[ZonSerializable]
     | Mapping[str, ZonSerializable]
 )
+
+
+@runtime_checkable
+class ZonEncodable(Protocol):
+    """Protocol for types that can be serialized to ZON."""
+
+    def to_zon(self) -> ZonSerializable:
+        """Transform the object into a ZON-serializable type."""
+        ...
 
 
 @final
