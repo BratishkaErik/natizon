@@ -36,6 +36,22 @@ def test_dumps_dicts(obj, expected: str):
     assert dumps(obj) == expected
 
 
+@pytest.mark.parametrize(
+    "keyword, expected",
+    [
+        ("if", '.{ .@"if" = 1 }'),
+        ("fn", '.{ .@"fn" = 1 }'),
+        ("var", '.{ .@"var" = 1 }'),
+        ("const", '.{ .@"const" = 1 }'),
+        ("align", '.{ .@"align" = 1 }'),
+    ],
+    ids=["if_keyword", "fn_keyword", "var_keyword", "const_keyword", "align_keyword"],
+)
+def test_dumps_keyword_escaping(keyword: str, expected: str):
+    """Ensure that ZON keywords are always quoted during serialization."""
+    assert dumps({keyword: 1}) == expected
+
+
 def test_integration_sanity():
     """Test that unambiguous dumped native structures can be parsed back.
 

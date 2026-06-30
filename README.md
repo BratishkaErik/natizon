@@ -7,8 +7,13 @@ directly into Python data structures, and for encoding Python data structures ba
 It relies strictly on standard Python types, without AST wrappers and so on.
 
 > [!NOTE]
-> `natizon` is slightly more lenient than the official `std.zon` parser. This flexibility is intentional,
-> making it easier to consume and work with data in Python environments.
+> `natizon` is slightly more lenient than the official `std.zon` parser. This
+> flexibility is intentional, making it easier to consume and work with data
+> in Python environments.
+>
+> For example, you can safely parse ZON containing
+> unquoted keywords like `if` or `fn`, but `dumps()` will always normalize
+> these to `.@"if"` and `.@"fn"` to guarantee strict compatibility.
 
 ## Installation
 
