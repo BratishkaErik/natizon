@@ -38,6 +38,7 @@ Issues = "https://github.com/BratishkaErik/natizon/issues"
 [dependency-groups]
 test = [
     "pytest>=9.0.3",
+    "pytest-codeblocks>=0.18.0",
 ]
 lint = [
     "ruff>=0.15.16",
@@ -70,4 +71,4 @@ convention = "google"
 "tests/**" = ["D"]
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
+addopts = ["--import-mode=importlib", "--codeblocks"]

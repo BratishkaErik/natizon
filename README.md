@@ -91,6 +91,8 @@ print(zon_string)
 
 Output:
 
+<!--pytest-codeblocks:expected-output-->
+
 ```zig
 .{
   .title = "Neon Dash",
@@ -165,6 +167,8 @@ print(dumps(data, indent=2))
 ```
 
 Output:
+
+<!--pytest-codeblocks:expected-output-->
 
 ```zig
 .{
