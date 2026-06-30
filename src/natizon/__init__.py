@@ -12,14 +12,17 @@ and encoding Python objects back into ZON-formatted strings.
 __all__ = (
     "dumps",
     "EmptyContainerMode",
+    "loads",
+    "validate_zon_serializable",
     "ZonDecodeError",
+    "ZonEncodable",
     "ZonError",
     "ZonInternalError",
+    "ZonSerializable",
     "ZonType",
-    "loads",
 )
 
 from .exceptions import ZonDecodeError, ZonError, ZonInternalError
 from .parser import EmptyContainerMode, loads
-from .serializer import dumps
-from .types import ZonType
+from .serializer import dumps, validate_zon_serializable
+from .types import ZonEncodable, ZonSerializable, ZonType

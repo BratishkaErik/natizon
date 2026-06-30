@@ -7,8 +7,13 @@ directly into Python data structures, and for encoding Python data structures ba
 It relies strictly on standard Python types, without AST wrappers and so on.
 
 > [!NOTE]
-> `natizon` is slightly more lenient than the official `std.zon` parser. This flexibility is intentional,
-> making it easier to consume and work with data in Python environments.
+> `natizon` is slightly more lenient than the official `std.zon` parser. This
+> flexibility is intentional, making it easier to consume and work with data
+> in Python environments.
+>
+> For example, you can safely parse ZON containing
+> unquoted keywords like `if` or `fn`, but `dumps()` will always normalize
+> these to `.@"if"` and `.@"fn"` to guarantee strict compatibility.
 
 ## Installation
 
@@ -65,28 +70,36 @@ print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
 You can serialize standard Python objects back into ZON text using `dumps()`:
 
 ```python
+from enum import Enum
 from natizon import dumps
 
-data = {
-    "package_name": "network_tools",
-    "version": "2.1.0",
-    "supported_platforms": ["linux", "macos", "windows"],
+
+class Difficulty(Enum):
+    EASY = "easy"
+    HARD = "hard"
+
+
+game_config = {
+    "title": "Neon Dash",
+    "difficulty": Difficulty.HARD,
+    "player_stats": {"level": 10, "xp": 1500},
 }
 
-zon_string = dumps(data, indent=2)
+zon_string = dumps(game_config, indent=2)
 print(zon_string)
 ```
 
 Output:
 
+<!--pytest-codeblocks:expected-output-->
+
 ```zig
 .{
-  .package_name = "network_tools",
-  .version = "2.1.0",
-  .supported_platforms = .{
-    "linux",
-    "macos",
-    "windows",
+  .title = "Neon Dash",
+  .difficulty = .HARD,
+  .player_stats = .{
+    .level = 10,
+    .xp = 1500,
   },
 }
 ```
@@ -94,10 +107,75 @@ Output:
 > [!NOTE]
 > While `loads()` and `dumps()` are designed to be compatible, some ZON-specific constructs do not roundtrip exactly:
 > * **Enum literals** (e.g., `.linux`) are parsed into Python strings and will serialize back as quoted strings
-    (`"linux"`).
+    (`"linux"`). If you want to preserve them as ZON Enum literals, convert them to your `Enum` subclass member
+    (e.g.,`Color.RED`) instead.
+> * **Enum flags** (`enum.Flag`, `enum.IntFlag`) are not serializable, as their bitwise nature lacks a canonical ZON
+    representation. To include them in your output, convert them to a standard `Enum` tag, integer, or array first.
 > * **Char literals** (e.g., `'a'`) are parsed into Python integers and will serialize back as integers (`97`).
 > * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
     `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
+
+## Advanced Usage
+
+### Validation
+
+`dumps()` automatically validates your data before serialization. However, if you need to check if an object is
+serializable without triggering the full serialization process, you can use `validate_zon_serializable()`:
+
+```python
+from natizon import validate_zon_serializable
+
+user_settings = {
+    "theme": "dark",
+    "font_size": 14,
+    "notifications": True,
+}
+
+# Raises TypeError if the object is not serializable,
+# or ValueError if a circular reference is detected.
+try:
+    validate_zon_serializable(user_settings)
+    print("Data is valid!")
+except (TypeError, ValueError) as e:
+    print(f"Validation failed: {e}")
+```
+
+### Custom Serialization
+
+If you have custom classes that you want to serialize into ZON, you can implement the `ZonEncodable` protocol. Simply
+define a `to_zon()` method that returns a `ZonSerializable` type.
+
+```python
+from dataclasses import dataclass
+from natizon import dumps, ZonSerializable
+
+
+@dataclass
+class ByteSize:
+    bytes: int
+
+    def to_zon(self) -> ZonSerializable:
+        return f"{self.bytes}B"
+
+
+data = {
+    "cache_limit": ByteSize(1024),
+    "buffer_size": ByteSize(2048),
+}
+
+print(dumps(data, indent=2))
+```
+
+Output:
+
+<!--pytest-codeblocks:expected-output-->
+
+```zig
+.{
+  .cache_limit = "1024B",
+  .buffer_size = "2048B",
+}
+```
 
 ## ZON to Python Type Mapping
 
@@ -146,15 +224,19 @@ print(data)  # Output: ()
 
 When you pass a Python object to `natizon.dumps()`, it is converted to its natural ZON representation.
 
-| Python Type    | Python Value     | ZON Output        | Notes                                                             |
-|:---------------|:-----------------|:------------------|:------------------------------------------------------------------|
-| `NoneType`     | `None`           | `null`            |                                                                   |
-| `bool`         | `True`, `False`  | `true`, `false`   |                                                                   |
-| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                   |
-| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.          |
-| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string. |
-| `list`/`tuple` | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Both `list` and `tuple` map to ZON arrays.                        |
-| `dict`         | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax. |
+| Python Type    | Python Value     | ZON Output        | Notes                                                                                                  |
+|:---------------|:-----------------|:------------------|:-------------------------------------------------------------------------------------------------------|
+| `NoneType`     | `None`           | `null`            |                                                                                                        |
+| `bool`         | `True`, `False`  | `true`, `false`   |                                                                                                        |
+| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                                                        |
+| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.                                               |
+| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.                                      |
+| `Enum`         | `Color.RED`      | `.RED`            | Maps to ZON Enum Literals using the member **name**.                                                   |
+| `Sequence`     | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`).                                   |
+| `Mapping`      | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.                                      |
+| `ZonEncodable` | `obj.to_zon()`   | *Variable*        | **Custom:** User defines the serialization (can return any supported type above, e.g., `str`, `dict`). |
+
+**Note:** For `Mapping` types, only string keys are supported. Non-string keys will result in a `TypeError`.
 
 ### Configuration
 

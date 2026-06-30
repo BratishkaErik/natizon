@@ -78,6 +78,23 @@ def escape_zon_string(s: str) -> str:
     return s.translate(_ZON_ESCAPE_TABLE)
 
 
+# fmt: off
+# https://codeberg.org/ziglang/zig-spec/src/commit/4680456aff4876ea595fee920dfcadc957b3caa4/grammar/grammar.peg
+_KEYWORDS = frozenset({
+    "addrspace", "align", "allowzero", "and", "anyframe",
+    "anytype", "asm", "break", "callconv", "catch",
+    "comptime", "const", "continue", "defer", "else",
+    "enum", "errdefer", "error", "export", "extern",
+    "fn", "for", "if", "inline", "linksection",
+    "noalias", "noinline", "nosuspend", "opaque", "or",
+    "orelse", "packed", "pub", "resume", "return",
+    "struct", "suspend", "switch", "test", "threadlocal",
+    "try", "union", "unreachable", "var", "volatile",
+    "while"
+})
+# fmt: on
+
+
 def can_be_plain_identifier(s: str) -> bool:
     """Checks if a string is a valid unquoted ZON identifier.
 
@@ -88,4 +105,4 @@ def can_be_plain_identifier(s: str) -> bool:
         True if the string can be used without quotes. If False, the string
         must be represented as a quoted identifier (e.g., using the @"..." form).
     """
-    return bool(_PLAIN_ID_PATTERN.match(s))
+    return bool(_PLAIN_ID_PATTERN.match(s)) and s not in _KEYWORDS
