@@ -2,9 +2,12 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
-"""Type definitions for the ZON parser."""
+"""Type definitions for the ZON parser and serializer."""
 
-__all__ = ("ZonType",)
+__all__ = (
+    "ZonSerializable",
+    "ZonType",
+)
 
 from enum import StrEnum
 from typing import final
@@ -21,6 +24,20 @@ type ZonType = (
     | dict[str, ZonType]
     | list[ZonType]
     | tuple[ZonType, ...]
+)
+
+# Represents any value that can be serialized to ZON.
+type ZonSerializable = (
+    # Atomics
+    None
+    | str
+    | int
+    | float
+    | bool
+    # Containers
+    | dict[str, ZonSerializable]
+    | list[ZonSerializable]
+    | tuple[ZonSerializable, ...]
 )
 
 

@@ -4,13 +4,16 @@
 
 """ZON serializer."""
 
-__all__ = ("dumps",)
+__all__ = (
+    "dumps",
+    "validate_zon_serializable",
+)
 
 import math
-from typing import Any, Final, final
+from typing import Final, cast, final
 
 from ._strings import can_be_plain_identifier, escape_zon_string
-from .types import ZonType
+from .types import ZonSerializable
 
 
 @final
@@ -54,7 +57,7 @@ class _ZonSerializer:
         return f".{{ {', '.join(lines)} }}"
 
     def _dump_sequence(
-        self, seq: list[ZonType] | tuple[ZonType, ...], level: int
+        self, seq: list[ZonSerializable] | tuple[ZonSerializable, ...], level: int
     ) -> str:
         if not seq:
             return ".{}"
@@ -62,7 +65,7 @@ class _ZonSerializer:
         lines = [self.dump(item, level + 1) for item in seq]
         return self._braces(lines, level)
 
-    def _dump_dict(self, d: dict[str, ZonType], level: int) -> str:
+    def _dump_dict(self, d: dict[str, ZonSerializable], level: int) -> str:
         if not d:
             return ".{}"
 
@@ -70,7 +73,7 @@ class _ZonSerializer:
         lines = [f"{self._format_key(k)} = {self.dump(v, level + 1)}" for k, v in items]
         return self._braces(lines, level)
 
-    def dump(self, current_obj: ZonType, level: int = 0) -> str:
+    def dump(self, current_obj: ZonSerializable, level: int = 0) -> str:
         """Recursively serialize an object based on its type."""
         result: str
         match current_obj:
@@ -90,14 +93,66 @@ class _ZonSerializer:
                 result = self._dump_dict(d, level)
             case _:
                 obj_type = type(current_obj).__name__
-                msg = f"Object of type {obj_type} is not ZON serializable"
+                msg = f"object of type {obj_type!r} is not ZON serializable"
                 raise TypeError(msg)
 
         return result
 
 
+def _validate_zon_serializable_impl(obj: object, seen_ids: set[int]) -> None:
+    match obj:
+        case None | str() | int() | float() | bool():
+            return
+
+        case dict():
+            obj_id = id(obj)
+            if obj_id in seen_ids:
+                msg = "circular reference detected in ZON dictionary"
+                raise ValueError(msg)
+            seen_ids.add(obj_id)
+
+            try:
+                for k, v in obj.items():
+                    if not isinstance(k, str):
+                        k_type = type(k).__name__
+                        msg = f"ZON dictionary keys must be strings, found {k_type!r}"
+                        raise TypeError(msg)
+                    _validate_zon_serializable_impl(v, seen_ids)
+            finally:
+                seen_ids.remove(obj_id)
+
+        case list() | tuple():
+            obj_id = id(obj)
+            if obj_id in seen_ids:
+                msg = "circular reference detected in ZON sequence"
+                raise ValueError(msg)
+            seen_ids.add(obj_id)
+
+            try:
+                for item in obj:
+                    _validate_zon_serializable_impl(item, seen_ids)
+            finally:
+                seen_ids.remove(obj_id)
+
+        case _:
+            obj_type = type(obj).__name__
+            msg = f"object of type {obj_type!r} is not ZON serializable"
+            raise TypeError(msg)
+
+
+def validate_zon_serializable(obj: object, /) -> None:
+    """Recursively validate that an object can be serialized with `dumps` function to ZON.
+
+    Raises:
+        TypeError: If the object or any nested element is not serializable to ZON.
+        ValueError: If a circular reference is detected.
+    """
+    _validate_zon_serializable_impl(obj, set())
+
+
 def dumps(
-    obj: Any,
+    obj: object,
+    /,
     *,
     indent: int | str | None = None,
     sort_keys: bool = False,
@@ -118,14 +173,17 @@ def dumps(
 
     Raises:
         TypeError: If the object is not serializable to ZON.
-        ValueError: If indent is a negative integer.
+        ValueError: If indent is a negative integer, or a circular reference is detected.
     """
+    validate_zon_serializable(obj)
+    serializable_obj = cast(ZonSerializable, obj)
+
     indent_str = ""
     is_pretty = indent is not None
 
     if isinstance(indent, int):
         if indent < 0:
-            msg = "indent must be a non-negative integer"
+            msg = f"indent must be a non-negative integer, got {indent!r}"
             raise ValueError(msg)
         indent_str = " " * indent
     elif isinstance(indent, str):
@@ -136,4 +194,4 @@ def dumps(
         is_pretty=is_pretty,
         sort_keys=sort_keys,
     )
-    return serializer.dump(obj)
+    return serializer.dump(serializable_obj)

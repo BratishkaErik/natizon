@@ -105,6 +105,7 @@ class _ZonParserImpl:
 
 def loads(
     text: str,
+    /,
     *,
     use_tuples: bool = False,
     empty_mode: EmptyContainerMode = EmptyContainerMode.DICT,

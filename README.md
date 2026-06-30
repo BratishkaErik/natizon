@@ -99,6 +99,29 @@ Output:
 > * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
     `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
 
+### Validation
+
+`dumps()` automatically validates your data before serialization. However, if you need to check if an object is
+serializable without triggering the full serialization process, you can use `validate_zon_serializable()`:
+
+```python
+from natizon import validate_zon_serializable
+
+user_settings = {
+    "theme": "dark",
+    "font_size": 14,
+    "notifications": True,
+}
+
+# Raises TypeError if the object is not serializable,
+# or ValueError if a circular reference is detected.
+try:
+    validate_zon_serializable(user_settings)
+    print("Data is valid!")
+except (TypeError, ValueError) as e:
+    print(f"Validation failed: {e}")
+```
+
 ## ZON to Python Type Mapping
 
 When you pass a ZON string to `natizon.loads()`, the parser automatically converts ZON primitives and structures into
@@ -155,6 +178,8 @@ When you pass a Python object to `natizon.dumps()`, it is converted to its natur
 | `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string. |
 | `list`/`tuple` | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Both `list` and `tuple` map to ZON arrays.                        |
 | `dict`         | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax. |
+
+**Note:** For `dict` types, only string keys are supported. Non-string keys will result in a `TypeError`.
 
 ### Configuration
 
