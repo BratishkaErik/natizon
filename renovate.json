@@ -1,0 +1,30 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:best-practices",
+    ":semanticCommitTypeAll(chore)"
+  ],
+  "minimumReleaseAge": "1 week",
+  "packageRules": [
+    {
+      "description": "Group Github Actions updates",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "all GitHub Actions updates",
+      "groupSlug": "github-actions-all"
+    },
+    {
+      "description": "Group non-major Python dependency updates",
+      "matchManagers": [
+        "pep621"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "non-major Python dependencies updates",
+      "groupSlug": "python-non-major"
+    }
+  ]
+}
