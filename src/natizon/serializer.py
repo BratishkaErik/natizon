@@ -99,6 +99,7 @@ class _ZonSerializer:
             case str():
                 result = f'"{escape_zon_string(current_obj)}"'
             case Mapping() as d:
+                d = cast(Mapping[str, ZonSerializable], d)
                 result = self._format_mapping(d, level)
             case Sequence() as seq:
                 result = self._format_sequence(seq, level)
