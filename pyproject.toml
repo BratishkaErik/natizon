@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "natizon"
-version = "0.4.1"
+version = "0.4.2"
 requires-python = ">= 3.12"
 authors = [
     { name = "Eric Joldasov", email = "bratishkaerik@landless-city.net" }
