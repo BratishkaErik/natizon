@@ -75,3 +75,4 @@ convention = "google"
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib", "--codeblocks"]
+markers = ["requires_zig: tests that need the `zig` compiler installed"]
