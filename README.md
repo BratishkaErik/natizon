@@ -179,6 +179,13 @@ Output:
 }
 ```
 
+> [!IMPORTANT]
+> If an object implements the `ZonEncodable` protocol, `dumps()` **always**
+> prefers its `to_zon()` method over any built-in serialization of the
+> object’s actual type. This means a subclass of `str`, `int`, or `Enum`
+> that defines `to_zon()` will be serialized as whatever `to_zon()`
+> returns, not as a string, integer, or enum literal.
+
 ## ZON to Python Type Mapping
 
 When you pass a ZON string to `natizon.loads()`, the parser automatically converts ZON primitives and structures into
