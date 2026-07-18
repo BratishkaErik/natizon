@@ -45,3 +45,21 @@ def test_dumps_flags_raises():
 
     with pytest.raises(TypeError, match="serialization is ambiguous"):
         dumps(Permissions.READ)
+
+
+class SpecialFloatEnum(Enum):
+    inf = 1
+    nan = 2
+
+
+@pytest.mark.parametrize(
+    "member, expected",
+    [
+        (SpecialFloatEnum.inf, ".inf"),
+        (SpecialFloatEnum.nan, ".nan"),
+    ],
+    ids=["enum_inf", "enum_nan"],
+)
+def test_dumps_enum_special_float_keywords(member, expected: str):
+    """Test that enum members named inf and nan are serialized as ZON enum literals."""
+    assert dumps(member) == expected

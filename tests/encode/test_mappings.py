@@ -74,3 +74,16 @@ def test_integration_sanity():
     restored = loads(zon_string)
 
     assert original == restored
+
+
+@pytest.mark.parametrize(
+    "obj, expected",
+    [
+        ({"inf": 1}, ".{ .inf = 1 }"),
+        ({"nan": 2}, ".{ .nan = 2 }"),
+    ],
+    ids=["inf_key", "nan_key"],
+)
+def test_dumps_special_float_keywords_as_keys(obj, expected: str):
+    """Test that inf and nan as dictionary keys are serialized as plain identifiers."""
+    assert dumps(obj) == expected
