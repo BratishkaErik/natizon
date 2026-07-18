@@ -44,7 +44,7 @@ uv add natizon
 ### Parsing
 
 ```python
-from natizon import loads
+import natizon
 
 zon_data = r"""
 .{
@@ -59,7 +59,7 @@ zon_data = r"""
 """
 
 # Parses directly into standard Python dicts and lists
-parsed_data = loads(zon_data)
+parsed_data = natizon.loads(zon_data)
 
 print(parsed_data["package_name"])  # "network_tools"
 print(parsed_data["supported_platforms"])  # ["linux", "macos", "windows"]
@@ -71,7 +71,7 @@ You can serialize standard Python objects back into ZON text using `dumps()`:
 
 ```python
 from enum import Enum
-from natizon import dumps
+import natizon
 
 
 class Difficulty(Enum):
@@ -85,7 +85,7 @@ game_config = {
     "player_stats": {"level": 10, "xp": 1500},
 }
 
-zon_string = dumps(game_config, indent=2)
+zon_string = natizon.dumps(game_config, indent=2)
 print(zon_string)
 ```
 
@@ -147,7 +147,8 @@ define a `to_zon()` method that returns a `ZonSerializable` type.
 
 ```python
 from dataclasses import dataclass
-from natizon import dumps, ZonSerializable
+import natizon
+from natizon import ZonSerializable
 
 
 @dataclass
@@ -163,7 +164,8 @@ data = {
     "buffer_size": ByteSize(2048),
 }
 
-print(dumps(data, indent=2))
+zon_string = natizon.dumps(data, indent=2)
+print(zon_string)
 ```
 
 Output:
@@ -214,9 +216,14 @@ Here's breakdown:
   becomes an empty dictionary (`{}`) or an empty sequence (`[]` / `()`).
 
 ```python
-from natizon import EmptyContainerMode, loads
+import natizon
+from natizon import EmptyContainerMode
 
-data = loads(".{}", use_tuples=True, empty_mode=EmptyContainerMode.SEQUENCE)
+data = natizon.loads(
+    ".{}",
+    use_tuples=True,
+    empty_mode=EmptyContainerMode.SEQUENCE,
+)
 print(data)  # Output: ()
 ```
 
