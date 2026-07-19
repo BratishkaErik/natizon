@@ -1,19 +1,37 @@
+<!--
+style: Microsoft Writing Style Guide
+reason: Project landing page optimized for developer onboarding — friendly, task-oriented, progressive-disclosure flow that minimizes cognitive load.
+doc-type: reference
+audience: Python developers reading or writing ZON data from toolchains and build scripts
+-->
+
 # natizon
 
-`natizon` (short for "native-ZON") is a pure Python parser and serializer for
-[ZON (Zig Object Notation)](https://ziglang.org/documentation/0.16.0/std/#std.zon). Built on top of
-[Lark](https://github.com/lark-parser/lark), it provides a familiar, `json`-like interface for decoding ZON strings
-directly into Python data structures, and for encoding Python data structures back into ZON text.
-It relies strictly on standard Python types, without AST wrappers and so on.
+`natizon` is a pure Python parser and serializer for [ZON (Zig Object Notation)][zig-zon].
+It converts ZON text directly into standard Python types, and serializes Python objects back
+into valid ZON — all without intermediate AST objects or wrapper layers. Its API is modeled
+after the standard library's `json` module, offering `loads()` and `dumps()` as the primary
+entry points.
+
+Built on [Lark][lark], the library handles the full ZON grammar, including structs, arrays,
+enum literals, multiline strings, hexadecimal and float literals, and quoted identifiers.
 
 > [!NOTE]
-> `natizon` is slightly more lenient than the official `std.zon` parser. This
-> flexibility is intentional, making it easier to consume and work with data
-> in Python environments.
+> `natizon` is intentionally a little more forgiving than Zig's own `std.zon` parser. This
+> leniency makes it easier to consume real-world ZON data in Python without friction.
 >
-> For example, you can safely parse ZON containing
-> unquoted keywords like `if` or `fn`, but `dumps()` will always normalize
-> these to `.@"if"` and `.@"fn"` to guarantee strict compatibility.
+> For example, unquoted Zig keywords like `if` or `fn` parse just fine — but `dumps()` always
+> normalizes them to `.@"if"` and `.@"fn"` for strict compatibility when you write back out.
+
+## API Overview
+
+| Function | Signature | Description |
+|---|---|---|
+| `loads` | `(zon_str, *, use_tuples=False, empty_mode=DICT) → dict` | Parse ZON string to Python dicts/lists. |
+| `dumps` | `(obj, *, indent=None, sort_keys=False) → str` | Serialize Python object to ZON string. |
+| `validate_zon_serializable` | `(obj) → None` | Validate an object is ZON-serializable; raises `TypeError` or `ValueError`. |
+
+> [Full type mapping reference →][type-mapping]
 
 ## Installation
 
@@ -21,7 +39,7 @@ It relies strictly on standard Python types, without AST wrappers and so on.
 pip install natizon
 ```
 
-or:
+Or:
 
 ```shell
 uv add natizon
@@ -34,12 +52,11 @@ uv add natizon
 > [!TIP]
 > **Looking to parse `build.zig.zon`?**
 >
-> Check out this Python script for
-> [Parsing and validating build.zig.zon](https://gist.github.com/BratishkaErik/8ec576586ebca98f222e8e7c2bf3d98b)
+> Check out [this Python script][gist-build-zon] for parsing and validating `build.zig.zon`
 > to see how to:
 > * load Zig 0.16 package metadata using `natizon`,
-> * validate fields with `Pydantic`,
-> * and print a pretty JSON dump using `Rich`.
+> * validate fields with Pydantic,
+> * and print a pretty JSON dump using Rich.
 
 ### Parsing
 
@@ -107,20 +124,20 @@ Output:
 > [!NOTE]
 > While `loads()` and `dumps()` are designed to be compatible, some ZON-specific constructs do not roundtrip exactly:
 > * **Enum literals** (e.g., `.linux`) are parsed into Python strings and will serialize back as quoted strings
-    (`"linux"`). If you want to preserve them as ZON Enum literals, convert them to your `Enum` subclass member
-    (e.g.,`Color.RED`) instead.
-> * **Enum flags** (`enum.Flag`, `enum.IntFlag`) are not serializable, as their bitwise nature lacks a canonical ZON
-    representation. To include them in your output, convert them to a standard `Enum` tag, integer, or array first.
+>   (`"linux"`). If you want to preserve them as ZON Enum literals, convert them to your `Enum` subclass member
+>   (e.g., `Color.RED`) instead.
+> * **Enum flags** (`enum.Flag`, `enum.IntFlag`) are not serializable — their bitwise nature lacks a canonical ZON
+>   representation. Convert them to a standard `Enum` tag, integer, or array before serialization.
 > * **Char literals** (e.g., `'a'`) are parsed into Python integers and will serialize back as integers (`97`).
 > * **Empty arrays** (`[]`) serialize to `.{}`, which `loads()` parses as an empty dict by default. Use
-    `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists/tuples.
+>   `EmptyContainerMode.SEQUENCE` if you need them to parse back as lists or tuples.
 
 ## Advanced Usage
 
 ### Validation
 
-`dumps()` automatically validates your data before serialization. However, if you need to check if an object is
-serializable without triggering the full serialization process, you can use `validate_zon_serializable()`:
+`dumps()` automatically validates your data before serialization. If you need to check whether an object is
+serializable without triggering the full serialization process, use `validate_zon_serializable()`:
 
 ```python
 from natizon import validate_zon_serializable
@@ -142,8 +159,8 @@ except (TypeError, ValueError) as e:
 
 ### Custom Serialization
 
-If you have custom classes that you want to serialize into ZON, you can implement the `ZonEncodable` protocol. Simply
-define a `to_zon()` method that returns a `ZonSerializable` type.
+Implement the `ZonEncodable` protocol on your own classes by defining a `to_zon()` method that returns a
+`ZonSerializable` type:
 
 ```python
 from dataclasses import dataclass
@@ -181,85 +198,19 @@ Output:
 
 > [!IMPORTANT]
 > If an object implements the `ZonEncodable` protocol, `dumps()` **always**
-> prefers its `to_zon()` method over any built-in serialization of the
-> object’s actual type. This means a subclass of `str`, `int`, or `Enum`
-> that defines `to_zon()` will be serialized as whatever `to_zon()`
-> returns, not as a string, integer, or enum literal.
-
-## ZON to Python Type Mapping
-
-When you pass a ZON string to `natizon.loads()`, the parser automatically converts ZON primitives and structures into
-their closest Python types.
-
-Here's breakdown:
-
-### Primitives and Literals
-
-| ZON Type              | ZON Example          | Python Type | Python Value     | Notes                                                          |
-|:----------------------|:---------------------|:------------|:-----------------|:---------------------------------------------------------------|
-| **Null**              | `null`               | `NoneType`  | `None`           |                                                                |
-| **Boolean**           | `true`, `false`      | `bool`      | `True`, `False`  |                                                                |
-| **Integer**           | `42`, `0x2A`         | `int`       | `42`             |                                                                |
-| **Float**             | `3.14`, `inf`, `nan` | `float`     | `3.14`           | Supports ZON-specific keywords: `nan` and `inf`.               |
-| **Char Literal**      | `'a'`                | `int`       | `97`             | Evaluates to the integer Unicode code point.                   |
-| **String**            | `"Hello"`            | `str`       | `"Hello"`        | Handles standard escapes and Unicode `\u{...}`.                |
-| **Multiline String**  | `\\Line 1`           | `str`       | `"Line 1"`       | Strips the `\\` prefix and joins multiple lines with newlines. |
-| **Enum Literal**      | `.linux`             | `str`       | `"linux"`        | Parsed simply as strings.                                      |
-| **Quoted Identifier** | `.@"complex-key!"`   | `str`       | `"complex-key!"` | Slices off the `@` prefix and evaluates the string.            |
-
-### Structures and Containers
-
-| ZON Type            | ZON Example    | Python Type | Python Value | Notes                                                          |
-|:--------------------|:---------------|:------------|:-------------|:---------------------------------------------------------------|
-| **Array**           | `.{ 1, 2, 3 }` | `list`      | `[1, 2, 3]`  | Parses as a `tuple` if `use_tuples=True` is set.               |
-| **Struct**          | `.{ .x = 1 }`  | `dict`      | `{"x": 1}`   | Raises `ValueError` if duplicate field names are encountered.  |
-| **Empty Container** | `.{}`          | `dict`      | `{}`         | Parses using Array rules if `empty_mode` is set to `SEQUENCE`. |
-
-### Configuration
-
-* **`use_tuples`** (`bool`, default `False`): If `True`, parses ZON arrays (e.g., `.{ 1, 2, 3 }`) as Python `tuple`s
-  instead of `list`s.
-* **`empty_mode`** (`EmptyContainerMode`, default `EmptyContainerMode.DICT`): Controls whether an empty container `.{}`
-  becomes an empty dictionary (`{}`) or an empty sequence (`[]` / `()`).
-
-```python
-import natizon
-from natizon import EmptyContainerMode
-
-data = natizon.loads(
-    ".{}",
-    use_tuples=True,
-    empty_mode=EmptyContainerMode.SEQUENCE,
-)
-print(data)  # Output: ()
-```
-
-## Python to ZON Type Mapping
-
-When you pass a Python object to `natizon.dumps()`, it is converted to its natural ZON representation.
-
-| Python Type    | Python Value     | ZON Output        | Notes                                                                                                  |
-|:---------------|:-----------------|:------------------|:-------------------------------------------------------------------------------------------------------|
-| `NoneType`     | `None`           | `null`            |                                                                                                        |
-| `bool`         | `True`, `False`  | `true`, `false`   |                                                                                                        |
-| `int`          | `42`, `-7`       | `42`, `-7`        |                                                                                                        |
-| `float`        | `3.14`           | `3.14`            | `nan`, `inf`, and `-inf` are serialized as ZON keywords.                                               |
-| `str`          | `"hello\nworld"` | `"hello\\nworld"` | Special characters are escaped; output is always a quoted string.                                      |
-| `Enum`         | `Color.RED`      | `.RED`            | Maps to ZON Enum Literals using the member **name**.                                                   |
-| `Sequence`     | `[1, 2, 3]`      | `.{ 1, 2, 3 }`    | Maps all `Sequence` types (e.g., `list`, `tuple`, `deque`, `range`).                                   |
-| `Mapping`      | `{"x": 1}`       | `.{ .x = 1 }`     | Keys become ZON identifiers; non-plain keys use `.@"..."` syntax.                                      |
-| `ZonEncodable` | `obj.to_zon()`   | *Variable*        | **Custom:** User defines the serialization (can return any supported type above, e.g., `str`, `dict`). |
-
-**Note:** For `Mapping` types, only string keys are supported. Non-string keys will result in a `TypeError`.
-
-### Configuration
-
-* **`indent`** (`int | str | None`, default `None`): If a non-negative integer, indents with that many spaces per level.
-  If a string (like `"\t"`), uses that string to indent each level. If `None`, outputs a compact, single-line
-  representation.
-* **`sort_keys`** (`bool`, default `False`): If `True`, dictionary keys are output in sorted order.
+> prefers its `to_zon()` method over built-in serialization for that object's
+> actual type. A subclass of `str`, `int`, or `Enum` that defines `to_zon()`
+> is serialized as whatever `to_zon()` returns — not as a string, integer, or
+> enum literal.
 
 ## License
 
-This project is licensed under the Apache License 2.0. See the [LICENSES](LICENSES) directory for the full license
-text.
+This project is licensed under the Apache License 2.0. See the [LICENSES][licenses] directory for the full license text.
+
+<!-- Reference-style links -->
+
+[lark]: https://github.com/lark-parser/lark
+[zig-zon]: https://ziglang.org/documentation/0.16.0/std/#std.zon
+[gist-build-zon]: https://gist.github.com/BratishkaErik/8ec576586ebca98f222e8e7c2bf3d98b
+[type-mapping]: docs/type-mapping.md
+[licenses]: LICENSES
