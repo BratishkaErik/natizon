@@ -40,12 +40,12 @@ Issues = "https://github.com/BratishkaErik/natizon/issues"
 
 [dependency-groups]
 test = [
-    "pytest>=9.0.3",
+    "pytest>=9.1.1",
     "pytest-codeblocks>=0.18.0",
 ]
 lint = [
-    "ruff>=0.15.16",
-    "ty>=0.0.44",
+    "ruff>=0.16.9",
+    "ty>=0.0.84",
 ]
 dev = [
     { include-group = "test" },

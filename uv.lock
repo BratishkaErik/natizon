@@ -62,17 +62,17 @@ requires-dist = [{ name = "lark", specifier = ">=1.3.1" }]
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-codeblocks", specifier = ">=0.18.0" },
-    { name = "ruff", specifier = ">=0.15.16" },
-    { name = "ty", specifier = ">=0.0.44" },
+    { name = "ruff", specifier = ">=0.16.9" },
+    { name = "ty", specifier = ">=0.0.84" },
 ]
 lint = [
-    { name = "ruff", specifier = ">=0.15.16" },
-    { name = "ty", specifier = ">=0.0.44" },
+    { name = "ruff", specifier = ">=0.16.9" },
+    { name = "ty", specifier = ">=0.0.84" },
 ]
 test = [
-    { name = "pytest", specifier = ">=9.0.3" },
+    { name = "pytest", specifier = ">=9.1.1" },
     { name = "pytest-codeblocks", specifier = ">=0.18.0" },
 ]
 
