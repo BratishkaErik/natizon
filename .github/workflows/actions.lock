@@ -5,7 +5,7 @@ version: 'v0.0.3'
 workflows:
     '.github/workflows/ci.yml':
         - 'actions/checkout@v7.0.1'
-        - 'astral-sh/setup-uv@v10.3.2'
+        - 'astral-sh/setup-uv@v10.3.3'
         - 'mlugg/setup-zig@v2.2.1'
     '.github/workflows/release.yml':
         - 'actions/attest@v4.2.2'
@@ -13,7 +13,7 @@ workflows:
         - 'actions/download-artifact@v8.0.2'
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/attest-action@843fdb67460680643852b73a167aa698fcccf43d'
-        - 'astral-sh/setup-uv@v10.3.2'
+        - 'astral-sh/setup-uv@v10.3.3'
     '.github/workflows/verify-lockfile.yml':
         - 'actions/checkout@v7.0.1'
 dependencies:
@@ -49,9 +49,9 @@ dependencies:
         commit: 'sha1-08807647e7069bb48b6ef5acd8ec9567f424441b'
         owner_id: 115962839
         repo_id: 846733598
-    'astral-sh/setup-uv@v10.3.2':
-        ref: 'v10.3.2'
-        commit: 'sha1-07a047e608db84b3d8c06cd9a7c7dcc9c355c18e'
+    'astral-sh/setup-uv@v10.3.3':
+        ref: 'v10.3.3'
+        commit: 'sha1-68559e99cc807c1eb7e9238fd43a15bba460eec2'
         owner_id: 115962839
         repo_id: 846733598
     'mlugg/setup-zig@v2.2.1':
