@@ -14,6 +14,8 @@ workflows:
         - 'actions/upload-artifact@v7.0.2'
         - 'astral-sh/attest-action@843fdb67460680643852b73a167aa698fcccf43d'
         - 'astral-sh/setup-uv@v10.3.2'
+    '.github/workflows/verify-lockfile.yml':
+        - 'actions/checkout@v7.0.1'
 dependencies:
     'actions/attest@v4.2.2':
         ref: 'v4.2.2'
