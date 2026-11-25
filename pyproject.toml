@@ -53,6 +53,16 @@ dev = [
     { include-group = "lint" },
 ]
 
+[tool.flit.sdist]
+include = [
+    "tests/**",
+    "docs/**",
+]
+exclude = [
+    "tests/**/__pycache__/**",
+    "tests/**/*.pyc",
+]
+
 [tool.uv]
 exclude-newer = "1 week"
 
